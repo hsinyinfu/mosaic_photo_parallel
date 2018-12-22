@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <pthread.h>
 
 #define MAX_IMAGE_NUM 1000
 
@@ -31,12 +32,23 @@ class Image {
 
 Image images[1000];
 
-int main(int argc, char* argv[]) {
-  // Set the path;
-  string path = "./img/";
+long long int loop_times;
+long long int number_of_cores;
+// Set the path;
+string path = "./img/";
+
+void *avg_thread(void *arg){
+  int id = *((int *) arg);
+
+  int start = id * loop_times;
+  int end = start + loop_times;
+
+  if(id == number_of_cores - 1){
+    end = MAX_IMAGE_NUM;
+  }
 
   // Read image data 
-  for(int i = 0 ; i < MAX_IMAGE_NUM ; i++){
+  for(int i = start ; i < end ; i++){
     // e.g.: ./img/ukbench00000.jpg
     char img_name[50];
     sprintf(img_name, "ukbench%05d.jpg", i);
@@ -49,7 +61,7 @@ int main(int argc, char* argv[]) {
     // Check image exists
     if ( !img_bgr.data ) {
       printf("No image data. filename: %s \n" , filename.c_str());
-      return -1;
+      return (void *) 0;
     }
 
     // Calculate the R G B avg;
@@ -77,18 +89,42 @@ int main(int argc, char* argv[]) {
 
     images[i].save_data(filename, R_avg, G_avg, B_avg);
   }
+}
+
+int main(int argc, char* argv[]) {
+  
+  if(argc != 2){
+    printf("Usage : ./preprocess_pthread [number_of_cores]\n");
+    return 0;
+  }
+
+  long long int thread;
+  number_of_cores = atoll(argv[1]);
+
+  loop_times = MAX_IMAGE_NUM / number_of_cores;
+
+  pthread_t thread_handles[number_of_cores];
+  int id[number_of_cores];
+  for(thread = 0 ; thread < number_of_cores ; thread++){
+    id[thread] = thread;
+    pthread_create(&thread_handles[thread], NULL, avg_thread, (void *) &id[thread]);
+  }
+
+  for(thread = 0 ; thread < number_of_cores ; thread++){
+    pthread_join(thread_handles[thread], NULL);
+  }
 
   // Output to output.csv
   std::ofstream outFile("output.csv", std::ios_base::out);
 
   for(unsigned int i = 0; i < MAX_IMAGE_NUM; i++) {
-		outFile << images[i].filename << ' ';
+    outFile << images[i].filename << ' ';
     outFile << images[i].R << ' ';
     outFile << images[i].G << ' ';
     outFile << images[i].B << std::endl;
-	}
-  
-  outFile.close();
+  }
 
+  outFile.close();
+  
   return 0;
 }

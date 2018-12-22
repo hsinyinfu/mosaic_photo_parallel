@@ -2,13 +2,16 @@ cmake_minimum_required(VERSION 2.8)
 project( Preprocessing )
 
 find_package( OpenCV REQUIRED )
+find_package (Threads)
 find_package( OpenMP REQUIRED )
 
 add_executable( DisplayImage DisplayImage.cpp )
 add_executable( preprocess_serial preprocess_serial.cpp )
+add_executable( preprocess_pthread preprocess_pthread.cpp )
 
 target_link_libraries( DisplayImage ${OpenCV_LIBS} )
 target_link_libraries( preprocess_serial ${OpenCV_LIBS} )
+target_link_libraries( preprocess_pthread ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
