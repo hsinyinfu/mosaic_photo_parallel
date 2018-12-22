@@ -14,7 +14,13 @@ OR
 ### Serial版本 ###
     ./preprocess_serial
 ### Pthread版本 ###
-    ./preprocess_serial [number_of_cores]
+    ./preprocess_pthread [number_of_cores]
+### OpenMP版本 ###
+    ./preprocess_openmp
+    
+如果要測試Scalability
+
+    taskset -c 0[,1,2,3] ./preprocess_openmp
 ### 最後會輸出 output.csv 其內容格式為 ###
     檔名 R G B (換行)
     e.g., ukbench00000.jpg 135 147 148
